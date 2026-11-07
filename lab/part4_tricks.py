@@ -68,7 +68,13 @@ async def play_trick(robot: Robot, name: str) -> Result:
     # QUEUE IT:
     # 4. Decide then: which state is Pupper in once the job is done? (Read the card above.)
     # 5. return with_note(note, await robot.queue(f"trick {name}", job, trick.total_time, then=...))
-    return not_written("TODO 7", "play_trick in lab/part4_tricks.py")
+    trick = robot.tricks.get(name)
+    if trick is None:
+        return Result(False, f"unknown trick '{name}'; available: {list(robot.tricks)}")
+    note = await prepare_to_move(robot)
+    job = lambda: play_policy_trick(robot, trick)
+    then = LOCOMOTION if not trick.interactive and trick.end_pose == "standing" else trick
+    return with_note(note, await robot.queue(f"trick {name}", job, trick.total_time, then=then))
     # ====================================
 
 
@@ -148,8 +154,8 @@ async def play_policy_trick(robot: Robot, trick: Trick) -> Result:
 # ========== TODO 8: YOUR CODE HERE ==========
 @tool(
     "play_trick",
-    "TODO 8: describe play_trick for Gemini." + PREPARES_MOVE + "\nTricks:\n{tricks}",
-    name=Param("string", "TODO 8", enum=TRICK_NAMES),
+    "Plays a trick from the given list of available tricks. Each trick's description states whether it starts standing or lying down, and the robot keeps its final pose until the next motion." + PREPARES_MOVE + "\nTricks:\n{tricks}",
+    name=Param("string", "The name of the trick to play.", enum=TRICK_NAMES),
 )
 # ====================================
 async def play_trick_tool(robot: Robot, name: str) -> Result:
