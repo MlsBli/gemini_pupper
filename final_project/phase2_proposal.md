@@ -24,12 +24,19 @@
 - **Bug found and fixed:** the IK and the physics gate each reuse one MuJoCo state. Two Gemini threads
   gating at once crashed MuJoCo; a lock now lets only one thread at a time touch the simulator.
 
+- **Request generator** (`kflib/request_gen.py`): categories in the decided proportions. It drops
+  the held-out tricks, near-copies of the benchmark's 12 requests, and duplicates. Requests that
+  differ only in their numbers ("paw up 3 cm" vs "5 cm") are kept, since they're different motions.
+- **Colab notebook** (`phase2_generate.ipynb`): setup → selftest → split.json (written once) →
+  requests → 20-request pilot → full Gemini run → procedural + `sit` → report → a 10-motion library
+  for Phase 3. Its logic was run locally with a stand-in LLM; the selftest is 40/40.
+
 **Two findings that change the decisions above:**
 1. **Most recorded course tricks fail our gate.** Of the 7, only `sit` and `sneeze` pass. The
    recordings have joints at their limits (push_up, stand_sit_stand, stand_sit_shake_sit_stand), feet
    sliding 8 cm (stand_downward_dog), and a too-fast blend at the end (pee). So "train on the other
-   four" would mean training on `sit` alone, unless the gate is relaxed for them. That's a
-   **(decide)** for the student.
+   four" would mean training on `sit` alone, unless the gate is relaxed for them.
+   **Decided 2026-11-17: train on `sit` only.**
 2. **Leak risk for 4c.** The keyframe prompt's worked sneeze example *is* the held-out course sneeze.
    Generated requests must therefore avoid the held-out tricks (sneeze, push-ups, sit/shake), or the
    zero-shot test on them isn't zero-shot.

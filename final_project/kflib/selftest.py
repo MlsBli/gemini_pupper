@@ -31,6 +31,7 @@ from .keyframes import FPS, build_from_keyframes, parse_keyframes
 from .metrics import evaluate
 from .motion import motion_from_dict, motion_to_dict, quat_to_rpy
 from .procedural import random_keyframes
+from .request_gen import screen
 from .prompt import EXAMPLE_SNEEZE, EXAMPLE_STEP, keyframe_system
 from .verify import finalize, gate
 
@@ -219,6 +220,16 @@ def part6_phase2():
     _check("build_library refuses a seam where the height jumps", False, "no error")
   except ValueError as e:
     _check("build_library refuses a seam where the height jumps", "height" in str(e), str(e)[:80])
+
+  for text, expect in [("Do a big dramatic sneeze!", "held out"), ("give me ten push-ups", "held out"),
+                       ("sit down and shake my hand", "held out"), ("Shake your body like a wet dog", "benchmark"),
+                       ("lift your front left paw 3 cm off the ground", "duplicate")]:
+    why = screen(text, ["Lift your front-left paw 3 cm off the ground."])
+    _check(f"request filter catches {text!r}", bool(why) and why.startswith(expect), str(why))
+  for text in ("wiggle your hips three times", "shake your head no", "crouch down 4 cm and look right",
+               "lift your front left paw 5 cm off the ground"):
+    why = screen(text, ["Lift your front-left paw 3 cm off the ground."])
+    _check(f"request filter keeps {text!r}", why is None, str(why))
 
   _check("split by group: stable, ~10% validation",
          split_of("proc_00001") == split_of("proc_00001")

@@ -116,8 +116,10 @@ what the tracker is for.**
   - **Mix:** ~250 Gemini + ~240 procedural + course tricks, then mirror everything and time-scale a
     third.
   - **Keep:** gate pass (plain-replay FALLS rejected).
-  - **Hold out for 4c:** `sneeze`, `push_up` and `stand_sit_shake_sit_stand`. Train on `pee`,
-    `stand_downward_dog`, `stand_sit_stand` and `sit`.
+  - **Hold out for 4c:** `sneeze`, `push_up` and `stand_sit_shake_sit_stand`.
+  - **Train on `sit` only.** The other recordings fail the gate.
+  - **Generated requests skip the held-out tricks,** since the prompt's sneeze example *is* the
+    course sneeze.
   - **Validation:** 10%, split by request, with all of a request's copies on one side.
   - **LLM:** Colab AI, with a pilot first.
 

@@ -22,7 +22,9 @@ TRICKS_DIR = Path(__file__).resolve().parents[2] / "tricks"  # this repo's trick
 STAND_TO_STAND = ("pee", "push_up", "sneeze", "stand_downward_dog", "stand_sit_shake_sit_stand",
                   "stand_sit_stand", "sit")
 HELD_OUT = ("sneeze", "push_up", "stand_sit_shake_sit_stand")  # Phase 4c (decided 2026-11-17)
-TRAIN = tuple(t for t in STAND_TO_STAND if t not in HELD_OUT)
+# Training uses sit only (decided 2026-11-17): of the other four, every recording fails
+# the gate (joints at their limits, an 8 cm foot slide, a too-fast end blend).
+TRAIN = ("sit",)
 
 
 def course_motion(name: str, tricks_dir: Path = TRICKS_DIR) -> md.Motion:
