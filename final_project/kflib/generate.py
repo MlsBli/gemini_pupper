@@ -77,30 +77,54 @@ def add_keyframe_motion(ds: Dataset, base_id: str, kfs, *, source: str, group: s
   return counts
 
 
-def add_procedural(ds: Dataset, seeds, cfg: ProcConfig = ProcConfig(), workers: int = 1) -> dict:
-  """Procedural motions for these seeds (id proc_<seed>), with their variants."""
+def add_procedural(ds: Dataset, seeds, cfg: ProcConfig = ProcConfig(), workers: int = 1,
+                   chunk: int = 32) -> dict:
+  """Procedural motions for these seeds (id proc_<seed>), with their variants.
+
+  Seeds go in chunks. In each chunk, every original motion is gated in parallel
+  (`workers` processes); then the variants of the ones that passed, also in
+  parallel. Results are added in seed order, so the dataset comes out the same
+  whatever `workers` is, and a stopped run loses at most one chunk.
+  """
   total = {"added": 0, "rejected": 0, "format": 0}
-  with (cf.ProcessPoolExecutor(workers) if workers > 1 else _NoPool()) as pool:
-    for seed in seeds:
-      items = random_keyframes(seed, cfg)
-      kfs, errs = parse_keyframes(items)
-      if errs:
-        total["format"] += 1
-        continue
-      c = add_keyframe_motion(ds, f"proc_{seed:05d}", kfs, source="procedural", group=f"proc_{seed:05d}",
-                              kind="procedural", extra=dict(seed=seed), pool=pool if workers > 1 else None)
-      total["added"] += c["added"]
-      total["rejected"] += c["rejected"]
-      print(f"seed {seed}: +{c['added']} (rejected {c['rejected']}) | total {total}", flush=True)
+  seeds = list(seeds)
+  pool = cf.ProcessPoolExecutor(workers) if workers > 1 else None
+  run = (lambda f, *its: pool.map(f, *its, chunksize=1)) if pool else map
+  try:
+    for start in range(0, len(seeds), chunk):
+      have = ds.ids()
+      bases = []  # (id, seed, keyframes)
+      for seed in seeds[start:start + chunk]:
+        kfs, errs = parse_keyframes(random_keyframes(seed, cfg))
+        if errs:
+          total["format"] += 1
+        else:
+          bases.append((f"proc_{seed:05d}", seed, kfs))
+
+      def keep(mid, seed, aug, k, motion, g, errs):
+        if errs:
+          total["rejected"] += 1
+          return False
+        ds.add(mid, motion, source="procedural", group=f"proc_{seed:05d}", gate_result=g,
+               parent=f"proc_{seed:05d}" if aug else "", aug=aug, kind="procedural",
+               extra=dict(keyframes=augment.to_items(k), seed=seed))
+        total["added"] += 1
+        return True
+
+      todo = [b for b in bases if b[0] not in have]
+      passed = {b[0] for b in bases if b[0] in have}
+      for (mid, seed, kfs), (_, motion, g, errs) in zip(todo, run(_try, [b[0] for b in todo], [b[2] for b in todo])):
+        if keep(mid, seed, "", kfs, motion, g, errs):
+          passed.add(mid)
+      jobs = [(vid, seed, aug, vk) for mid, seed, kfs in bases if mid in passed
+              for vid, aug, vk in variants(mid, kfs) if vid not in have]
+      for (vid, seed, aug, vk), (_, motion, g, errs) in zip(jobs, run(_try, [j[0] for j in jobs], [j[3] for j in jobs])):
+        keep(vid, seed, aug, vk, motion, g, errs)
+      print(f"seeds {seeds[start]}-{seeds[min(start + chunk, len(seeds)) - 1]}: total {total}", flush=True)
+  finally:
+    if pool:
+      pool.shutdown()
   return total
-
-
-class _NoPool:
-  def __enter__(self):
-    return None
-
-  def __exit__(self, *a):
-    return False
 
 
 def add_course(ds: Dataset, names) -> dict:
@@ -182,12 +206,13 @@ def main():
   ap.add_argument("--dataset", required=True)
   ap.add_argument("--n", type=int, default=240, help="procedural: how many seeds to try")
   ap.add_argument("--start", type=int, default=0, help="procedural: first seed")
-  ap.add_argument("--workers", type=int, default=1)
+  ap.add_argument("--workers", type=int, default=1, help="processes (use your CPU core count)")
+  ap.add_argument("--chunk", type=int, default=32, help="procedural: seeds per chunk (progress and resume unit)")
   ap.add_argument("--tricks", nargs="*", help="course: which tricks (default: the training ones)")
   args = ap.parse_args()
   ds = Dataset(args.dataset)
   if args.source == "procedural":
-    print(add_procedural(ds, range(args.start, args.start + args.n), workers=args.workers))
+    print(add_procedural(ds, range(args.start, args.start + args.n), workers=args.workers, chunk=args.chunk))
   else:
     from .course import TRAIN
 

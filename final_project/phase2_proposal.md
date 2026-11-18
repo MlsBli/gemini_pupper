@@ -19,8 +19,10 @@
 - **Selftest:** 31/31, with a new part 6 for these pieces.
 - **Procedural motions:** at 75% of the measured reach, 31/40 pass the gate (19 hold up, 12 wobble).
   Mirrored copies pass 31/31; time-scaled copies pass ~97%.
-- **Pilot:** a local dataset of 46 motions. 16 seeds took 4.5 min on 4 processes, so 240 seeds is
-  ~70 min on the laptop.
+- **Pilot:** a local dataset of 46 motions.
+- **Speed:** the procedural step now gates original motions in parallel too: ~4 s per seed on the
+  laptop's 8 cores, so 240 seeds take ~17 min instead of ~70. The output is identical to the serial
+  version (checked on 16 seeds: same ids, verdicts and splits).
 - **Bug found and fixed:** the IK and the physics gate each reuse one MuJoCo state. Two Gemini threads
   gating at once crashed MuJoCo; a lock now lets only one thread at a time touch the simulator.
 
