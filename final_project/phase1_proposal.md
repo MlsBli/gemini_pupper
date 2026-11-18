@@ -3,8 +3,11 @@
 **Status (2026-11-17): implemented** as `final_project/kflib/` and `final_project/make_motion.py`.
 - Colab is the reference environment; pupper-mjlab is pinned to `aa475e9` (`kflib/__init__.py`).
 - `run_keyframes` keeps its notebook name; `request_to_motion` is a thin wrapper around it.
-- The selftest's parts 1–4 pass locally (18/18). Part 5, the regression against the benchmark's
-  `runs/`, needs Drive, so it runs in Colab.
+- The selftest's parts 1–4 pass, both locally and in Colab (18/18).
+- Part 5, the regression, passes 24/24 locally. It ran on the benchmark's `results.pkl`, from the
+  downloaded `pupper_generation_benchmark.zip`; the results were never on Drive. Every rebuilt motion,
+  physics verdict and `evaluate()` number matches the benchmark exactly.
+- The prompt-text check was skipped: that zip predates the notebook saving its prompts.
 
 **Goal (from the plan).** Move the CPU half of `pupper_generation_benchmark.ipynb` into plain Python
 that Colab (and later a laptop) can import, **with identical behaviour**, plus small tests. Done when:

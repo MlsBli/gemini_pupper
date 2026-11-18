@@ -195,7 +195,9 @@ by one kind of motion.
 ## Phase 4: does it generalize? (the zero-shot test, 1 day)
 
 Held-out motions, never trained on:
-- **(a)** the 12 benchmark requests' keyframe motions (in the benchmark's `runs/` on Drive)
+- **(a)** the 12 benchmark requests' keyframe motions. They are *not* on Drive: the only copy is
+  `pupper_generation_benchmark.zip` (downloaded 2026-11-12), whose `results.pkl` holds all 24
+  keyframe results (12 requests × 2 repeats).
 - **(b)** about 30 new Gemini requests written after training started
 - **(c)** held-out course tricks.
 

@@ -131,12 +131,22 @@ def _kfs_from_record(items):
 
 def part5_regression(runs: Path):
   print(f"\n--- 5. Regression against the benchmark's saved results in {runs}")
+  if not runs.is_dir():
+    _check("the results folder exists", False, f"no folder {runs}")
+    return
+  files = sorted(runs.rglob("results.pkl"))  # runs/<experiment>/results.pkl, at any depth
+  if not files:
+    inside = sorted(p.name for p in runs.iterdir())[:10]
+    _check("found results.pkl files", False, f"none under {runs}; it contains {inside or 'nothing'}")
+    return
   recs = []
-  for f in sorted(runs.glob("*/results.pkl")):
+  for f in files:
     with f.open("rb") as fh:  # our own benchmark results (the notebook wrote them)
       recs += [(f.parent.name, r) for r in pickle.load(fh) if r.get("option") == "1_keyframes"]
   usable = [(e, r) for e, r in recs if r.get("keyframes") and r.get("motion") is not None]
-  _check("found saved keyframe results", bool(usable), f"{len(usable)} of {len(recs)} keyframe records have keyframes and a motion")
+  if not _check("found saved keyframe results", bool(usable),
+                f"{len(usable)} of {len(recs)} keyframe records in {len(files)} results.pkl have keyframes and a motion"):
+    return
   bad_motion, bad_verdict, bad_metrics = [], [], []
   for exp, r in usable:
     tag = f"{exp}/{r['request_id']}/rep{r.get('rep', 0)}"
@@ -162,11 +172,13 @@ def part5_regression(runs: Path):
   _check("every rebuilt motion matches the stored one (to 1e-6)", not bad_motion, f"{n - len(bad_motion)}/{n}; " + "; ".join(bad_motion[:3]))
   _check("every physics verdict matches", not bad_verdict, f"{n - len(bad_verdict)}/{n}; " + "; ".join(bad_verdict[:3]))
   _check("every evaluate() number matches", not bad_metrics, f"{n - len(bad_metrics)}/{n}; " + "; ".join(bad_metrics[:3]))
-  prompts = sorted(runs.glob("*/prompts/keyframes_*.txt"))
-  if prompts:
-    latest = max(prompts, key=lambda p: p.name.split("_", 1)[1])
-    same = latest.read_text(encoding="utf-8") == keyframe_system()
-    _check("keyframe_system() is the benchmark's last keyframe prompt, character for character", same, latest.parent.parent.name)
+  prompts = [p for p in runs.rglob("keyframes_*.txt") if p.parent.name == "prompts"]
+  if not prompts:
+    print("note  no saved prompts (runs/<experiment>/prompts/keyframes_*.txt): prompt check skipped")
+    return
+  latest = max(prompts, key=lambda p: p.name.split("_", 1)[1])
+  same = latest.read_text(encoding="utf-8") == keyframe_system()
+  _check("keyframe_system() is the benchmark's last keyframe prompt, character for character", same, latest.parent.parent.name)
 
 
 def main():
