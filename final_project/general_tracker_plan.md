@@ -110,6 +110,16 @@ what the tracker is for.**
 
   Notes and TA questions for all three: the follow-up discussion recorded in `phase0_answers.md`
   (section "Later").
+- **2026-11-17, Phase 1 done:** `kflib/` passes its selftest, including the regression: all 24
+  benchmark keyframe results rebuild exactly.
+- **2026-11-17, Phase 2 decisions** (details in `phase2_proposal.md`):
+  - **Mix:** ~250 Gemini + ~240 procedural + course tricks, then mirror everything and time-scale a
+    third.
+  - **Keep:** gate pass (plain-replay FALLS rejected).
+  - **Hold out for 4c:** `sneeze`, `push_up` and `stand_sit_shake_sit_stand`. Train on `pee`,
+    `stand_downward_dog`, `stand_sit_stand` and `sit`.
+  - **Validation:** 10%, split by request, with all of a request's copies on one side.
+  - **LLM:** Colab AI, with a pilot first.
 
 ## Phase 0: confirm the infrastructure supports this (half a day)
 

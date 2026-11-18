@@ -9,8 +9,9 @@
 3. Round trips: motion dicts, and the npz the tracker loads.
 4. Two keyframe motions join into a training library with no jump at the boundary
    (Phase 0, question 1: the tracker trains a library as one long motion).
-5. Regression: every keyframe result the benchmark saved is rebuilt from its stored
+5. Regression (with --runs): every keyframe result the benchmark saved is rebuilt from its stored
    keyframes and must match: the motion, the gate verdict, the metrics, and the prompt.
+6. Phase 2: mirror and time scale, procedural motions, place / build_library, the dataset.
 Nothing here calls an LLM or moves the robot.
 """
 import argparse
@@ -24,9 +25,12 @@ import numpy as np
 from mjlab.tasks.tracking.config.pupper import motion_design as md
 from mjlab.tasks.tracking.config.pupper.tricks import sit as course_sit
 
-from .keyframes import FPS, KF, build_from_keyframes, parse_keyframes
+from . import augment
+from .dataset import Dataset, build_library, place, split_of
+from .keyframes import FPS, build_from_keyframes, parse_keyframes
 from .metrics import evaluate
 from .motion import motion_from_dict, motion_to_dict, quat_to_rpy
+from .procedural import random_keyframes
 from .prompt import EXAMPLE_SNEEZE, EXAMPLE_STEP, keyframe_system
 from .verify import finalize, gate
 
@@ -124,11 +128,6 @@ def part4_joinable():
     _check("md.concat_clips joins them", False, str(e))
 
 
-def _kfs_from_record(items):
-  return [KF(float(k["t"]), np.array(k["body"], float), {leg: np.array(v, float) for leg, v in k["feet"].items()},
-             k.get("ease", "stop")) for k in items]
-
-
 def part5_regression(runs: Path):
   print(f"\n--- 5. Regression against the benchmark's saved results in {runs}")
   if not runs.is_dir():
@@ -151,7 +150,7 @@ def part5_regression(runs: Path):
   for exp, r in usable:
     tag = f"{exp}/{r['request_id']}/rep{r.get('rep', 0)}"
     interp = (r.get("config") or {}).get("kf_interp", "spline")
-    built = build_from_keyframes(_kfs_from_record(r["keyframes"]), interp)
+    built = build_from_keyframes(augment.from_record(r["keyframes"]), interp)
     motion, pre, slow = finalize(built)
     stored = r["motion"]
     if any(np.shape(stored[a]) != np.shape(getattr(motion, a)) for a in ("root_pos", "root_quat", "joint_pos")):
@@ -181,6 +180,64 @@ def part5_regression(runs: Path):
   _check("keyframe_system() is the benchmark's last keyframe prompt, character for character", same, latest.parent.parent.name)
 
 
+def part6_phase2():
+  print("\n--- 6. Phase 2 pieces: augmentation, procedural motions, the dataset, the library")
+  k, _ = parse_keyframes(EXAMPLE_STEP["keyframes"])  # lifts back_r
+  m = augment.mirror(k)
+  twice = augment.mirror(m)
+  _check("mirroring twice gives the original keyframes",
+         all(np.allclose(a.body, b.body) and a.feet.keys() == b.feet.keys() for a, b in zip(k, twice)))
+  lifted = {leg for kf in m for leg, v in kf.feet.items() if v[2] > 0}
+  _check("the mirrored step lifts back_l instead of back_r", lifted == {"back_l"}, str(lifted))
+  mk, errs = augment.check(m)
+  g = gate(build_from_keyframes(mk))
+  _check("the mirrored step passes the gate", not errs and g["ok"], "; ".join(errs + g["reasons"])[:100])
+  slow, _ = augment.check(augment.time_scale(k, 1.25))
+  _check("time x1.25 makes it 25% longer", abs(slow[-1].t - 1.25 * k[-1].t) < 1e-6, f"{slow[-1].t:.3f} s")
+  _, errs = augment.check(augment.time_scale(k, 0.3))
+  _check("too fast a time scale is rejected (keyframes closer than 0.08 s)", any("apart" in e for e in errs),
+         (errs or ["no error"])[0][:80])
+  _check("procedural: the same seed gives the same keyframes", random_keyframes(7) == random_keyframes(7))
+  items = random_keyframes(7)
+  _, errs = parse_keyframes(items)
+  _check("procedural: seed 7 is a valid keyframe list, stand to stand",
+         not errs and items[0].get("pose") == "stand" and items[-1].get("pose") == "stand", "; ".join(errs)[:80])
+
+  sneeze = _sneeze()
+  moved = place(sneeze, 0.1, -0.05, 30.0)
+  same = (np.allclose(moved.joint_pos, sneeze.joint_pos) and np.allclose(moved.root_pos[:, 2], sneeze.root_pos[:, 2])
+          and np.allclose(moved.root_pos[0, :2], [0.1, -0.05]) and abs(quat_to_rpy(moved.root_quat[0])[2] - 30) < 1e-6)
+  _check("place() moves and turns a motion on the ground, nothing else", same)
+  lib = build_library({"a": moved, "b": sneeze})
+  seam = len(moved.root_pos) - 1
+  jump_mm = 1000 * float(np.abs(np.diff(lib.root_pos[seam - 1:seam + 2, :2], axis=0)).max())
+  _check("build_library places each motion where the last one ended (no jump)", jump_mm < 1.0, f"{jump_mm:.2f} mm")
+  low = motion_from_dict({"root_pos": sneeze.root_pos - [0, 0, 0.02], "root_quat": sneeze.root_quat,
+                          "joint_pos": sneeze.joint_pos})
+  try:
+    build_library({"a": sneeze, "low": low})
+    _check("build_library refuses a seam where the height jumps", False, "no error")
+  except ValueError as e:
+    _check("build_library refuses a seam where the height jumps", "height" in str(e), str(e)[:80])
+
+  _check("split by group: stable, ~10% validation",
+         split_of("proc_00001") == split_of("proc_00001")
+         and 5 <= sum(split_of(f"g{i}") == "val" for i in range(1000)) / 10 <= 15)
+  with tempfile.TemporaryDirectory() as d:
+    ds = Dataset(d)
+    g = gate(sneeze)
+    row = ds.add("sneeze", sneeze, source="test", group="g_sneeze", gate_result=g, kind="test")
+    back = ds.load_motion("sneeze")
+    _check("Dataset.add writes the npz, record and manifest row; it loads back",
+           ds.ids() == {"sneeze"} and ds.record("sneeze")["verdict"] == row["verdict"]
+           and np.abs(back.joint_pos - sneeze.joint_pos).max() < 1e-5)
+    try:
+      ds.add("sneeze", sneeze, source="test", group="g_sneeze", gate_result=g)
+      _check("Dataset never overwrites a motion", False, "second add succeeded")
+    except FileExistsError:
+      _check("Dataset never overwrites a motion", True)
+
+
 def main():
   ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
   ap.add_argument("--runs", type=Path, help="the benchmark's runs/ folder (on Drive) for part 5")
@@ -189,6 +246,7 @@ def main():
   part2_format()
   part3_roundtrip()
   part4_joinable()
+  part6_phase2()
   if args.runs:
     part5_regression(args.runs)
   else:
