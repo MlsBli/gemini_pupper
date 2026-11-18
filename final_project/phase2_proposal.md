@@ -33,6 +33,23 @@
   requests → 20-request pilot → full Gemini run → procedural + `sit` → report → a 10-motion library
   for Phase 3. Its logic was run locally with a stand-in LLM; the selftest is 40/40.
 
+- **Procedural set generated (2026-11-18):** `C:/Users/M/pupper_datasets/v1`, 93 MB, made in 11 min on 8 cores.
+  - 409 procedural motions (177 of 240 seeds passed, 74%) plus `sit`: 410 motions, 40 min of motion.
+  - Split: 372 train, 38 val. `split.json` is written.
+  - Verdicts: 67% HOLDS UP, 33% WOBBLES (the benchmark's Gemini motions held up 54% of the time).
+  - **Skew:** 78% of motions lift a paw. Big height changes are rare: the median height range is 1 cm,
+    the lean before a lift.
+- **Rebalanced and regenerated (2026-11-18, the student's call):** the paw-lift chance per move is
+  now 0.15 (was 0.3), and pose moves pick height more often (weights 0.3 for dz, 0.2 pitch, 0.15
+  roll, 0.15 yaw, 0.1 x, 0.1 y). The new `v1`:
+  - 391 motions, 33 min, 77 MB; 170/240 seeds pass.
+  - Paw lifts: 78% → **46%**. Height range of 2 cm or more: 32% → **52%** (median 1.0 → 2.3 cm).
+    Median tilt: 12° → 14°.
+  - Trade-off: these hold up more often, 81% against 67%: paw lifts were what made motions wobble.
+    The Gemini half (54% held up in the benchmark) brings harder motions, so judge the combined set.
+  - The old set is kept as `v1_lift_heavy`.
+  - Each record now stores its `proc_config`.
+
 **Two findings that change the decisions above:**
 1. **Most recorded course tricks fail our gate.** Of the 7, only `sit` and `sneeze` pass. The
    recordings have joints at their limits (push_up, stand_sit_stand, stand_sit_shake_sit_stand), feet

@@ -29,7 +29,7 @@ class ProcConfig:
   n_moves: tuple[int, int] = (2, 5)  # moves per motion (inclusive)
   move_s: tuple[float, float] = (0.3, 1.0)  # seconds to reach a pose
   reach_frac: float = 0.75  # use this fraction of each measured range (combined poses reach less)
-  p_lift: float = 0.3  # chance a move is a paw lift
+  p_lift: float = 0.15  # chance a move is a paw lift (0.3 in the first v1: 78% of motions lifted a paw)
   p_wiggle: float = 0.15  # chance a move is a wiggle
   p_hold: float = 0.35  # chance a pose is held
   hold_s: tuple[float, float] = (0.2, 0.8)
@@ -37,6 +37,9 @@ class ProcConfig:
   p_back_to_stand: float = 0.3  # chance of returning to the stand between moves
   lift_dz: tuple[float, float] = (0.02, 0.06)  # paw lift height (m)
   max_start_s: float = 6.5  # no new move starts after this (motions stay under the 10 s limit)
+  # How often a pose move uses each body channel (it picks 1-3, weighted). Height is
+  # favoured: with equal weights, real crouches were rare (median height range 1 cm).
+  pose_weights: tuple[float, ...] = (0.3, 0.2, 0.15, 0.15, 0.1, 0.1)  # POSE_KEYS order
 
 
 POSE_KEYS = ("dz", "pitch", "roll", "yaw", "x", "y")
@@ -82,7 +85,8 @@ def random_keyframes(seed: int, cfg: ProcConfig = ProcConfig()) -> list[dict]:
       break
     kind = rng.choice(["pose", "lift", "wiggle"], p=[1 - cfg.p_lift - cfg.p_wiggle, cfg.p_lift, cfg.p_wiggle])
     if kind == "pose":
-      keys = rng.choice(POSE_KEYS, size=rng.integers(1, 4), replace=False)
+      w = np.array(cfg.pose_weights, float)
+      keys = rng.choice(POSE_KEYS, size=rng.integers(1, 4), replace=False, p=w / w.sum())
       ease = "flow" if rng.random() < cfg.p_flow else "stop"
       t = add(t + rng.uniform(*cfg.move_s), {k: pose_value(k) for k in keys}, ease=ease,
               hold=None if ease == "flow" else maybe_hold())

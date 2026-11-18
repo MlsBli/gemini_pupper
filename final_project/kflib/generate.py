@@ -12,6 +12,7 @@ The Gemini source needs an LLM; in Colab: add_gemini(ds, requests, LLM("colab"))
 """
 import argparse
 import concurrent.futures as cf
+import dataclasses
 import zlib
 
 from . import augment
@@ -107,7 +108,7 @@ def add_procedural(ds: Dataset, seeds, cfg: ProcConfig = ProcConfig(), workers: 
           return False
         ds.add(mid, motion, source="procedural", group=f"proc_{seed:05d}", gate_result=g,
                parent=f"proc_{seed:05d}" if aug else "", aug=aug, kind="procedural",
-               extra=dict(keyframes=augment.to_items(k), seed=seed))
+               extra=dict(keyframes=augment.to_items(k), seed=seed, proc_config=dataclasses.asdict(cfg)))
         total["added"] += 1
         return True
 
