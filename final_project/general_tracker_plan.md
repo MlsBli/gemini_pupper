@@ -141,6 +141,16 @@ what the tracker is for.**
     fast gate is more forgiving than `play_motion` (it has no latency model), so some motions in
     `v1` are harder than the gate said. That's fine for training: the tracker exists for them.
 
+- **2026-11-18, v1 run set up:** `phase3_v1.ipynb` plus `kflib/runs.py`.
+  - **Library:** every training motion of `v1` (~978), in a fixed shuffled order, so seams join
+    different motions rather than a motion and its own mirror. The course config is unchanged:
+    4096 envs.
+  - **Chunks:** training goes in chunks (default 5,000 iterations, up to a target of 20,000). The
+    run resumes from the newest checkpoint across all its session folders (mjlab's own lookup
+    would fail on an empty newest folder). Checkpoints are saved every 1,000 iterations.
+  - **Scoring:** a fixed evaluation set (every validation original + 30 training originals),
+    scored with `play_motion` at each chunk.
+
 ## Phase 0: confirm the infrastructure supports this (half a day)
 
 Read, don't assume. Answer each question with the file and line that shows it:
