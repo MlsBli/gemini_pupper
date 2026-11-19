@@ -123,6 +123,14 @@ what the tracker is for.**
   - **Validation:** 10%, split by request, with all of a request's copies on one side.
   - **LLM:** Colab AI, with a pilot first.
 
+- **2026-11-18, Phase 2 done:** dataset `v1` on Drive.
+  - 1,093 motions (87 min of motion): 471 originals (300 Gemini, 170 procedural, `sit`) plus their
+    mirrors and time-scaled copies. Split 978 train / 115 val.
+  - The Gemini motions are smaller than the benchmark's. Decided: go on to Phase 3, and let
+    Phase 4a show whether that matters.
+- **2026-11-18, Phase 3 started:** `phase3_smoke.ipynb` (10-motion smoke test, the course config
+  unchanged) and `kflib/score.py` (scores each motion with `play_motion`, plain replay and policy).
+
 ## Phase 0: confirm the infrastructure supports this (half a day)
 
 Read, don't assume. Answer each question with the file and line that shows it:
