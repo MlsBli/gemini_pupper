@@ -131,6 +131,16 @@ what the tracker is for.**
 - **2026-11-18, Phase 3 started:** `phase3_smoke.ipynb` (10-motion smoke test, the course config
   unchanged) and `kflib/score.py` (scores each motion with `play_motion`, plain replay and policy).
 
+- **2026-11-18, Phase 3 smoke test passed:** one policy (course config unchanged, 3,000 iterations,
+  10-motion library) tracks **10/10** training motions under `play_motion --checkpoint`, worst errors
+  0.8–1.8 cm and 1.5–5.5°. Two motions that only wobbled in plain replay are now tracked: `course_sit`
+  (6.5 cm / 12° → 1.7 cm / 2.5°) and `gem_q0251` (20° → 2.7°). So is `proc_00005`, which falls over in
+  plain replay. The 3 unseen validation motions also track (3/3), but they're easy (2 of them hold up
+  in plain replay anyway).
+  - **Finding:** `proc_00005` passed our CPU gate yet FALLS in `play_motion`'s plain replay. The
+    fast gate is more forgiving than `play_motion` (it has no latency model), so some motions in
+    `v1` are harder than the gate said. That's fine for training: the tracker exists for them.
+
 ## Phase 0: confirm the infrastructure supports this (half a day)
 
 Read, don't assume. Answer each question with the file and line that shows it:
