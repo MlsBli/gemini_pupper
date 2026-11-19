@@ -50,6 +50,17 @@
   - The old set is kept as `v1_lift_heavy`.
   - Each record now stores its `proc_config`.
 
+- **Gemini half run in Colab (2026-11-18).**
+  - Pilot: 20/20 passed, all on the first attempt, at 18 s per request (median).
+  - Full run: all 300 requests passed, giving 702 motions with their mirrors and time-scaled copies.
+  - `v1` is now 1,093 motions (87 min of motion): 471 originals, 470 mirrors, 152 time-scaled;
+    978 train, 115 val. Verdicts: 72% HOLDS UP, 28% WOBBLES.
+  - Gemini vs procedural: HOLDS UP 67% vs 81%; median height range 2.3 vs 2.2 cm; median tilt
+    12° vs 14°; paw lift 27% vs 46%; median duration 4.5 vs 4.9 s.
+  - **Smaller than the benchmark's Gemini motions** (tilt range 26° there). The likely reason is the
+    request mix: 25% are precise requests with modest numbers, while the benchmark leaned on
+    expressive ones. Yaw is rarely used.
+
 **Two findings that change the decisions above:**
 1. **Most recorded course tricks fail our gate.** Of the 7, only `sit` and `sneeze` pass. The
    recordings have joints at their limits (push_up, stand_sit_stand, stand_sit_shake_sit_stand), feet
