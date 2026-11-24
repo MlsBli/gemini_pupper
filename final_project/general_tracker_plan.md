@@ -159,6 +159,19 @@ what the tracker is for.**
     Gemini motions.
   - Next: train to 10,000, score again, and keep going only while validation improves.
 
+- **2026-11-24, Phase 3 stopped at 5,000 iterations:** the W&B curves are flat and `gem_q0137` looks
+  good in the viewer. On to Phase 4.
+- **2026-11-24, Phase 4 set up:** `phase4_zeroshot.ipynb`.
+  - **Test set `test_v1`:** the 24 benchmark motions (4a; 10 with precision checks) and the 3
+    held-out course tricks with their specialists (4c), built locally from the benchmark's
+    `results.pkl`. The notebook adds ~30 new requests (4b).
+  - **New scorer `kflib/track.py`:** `play_motion`'s scoring loop, plus deployed `policy.json`
+    policies (the specialists exist only as these) and the robot's recorded trajectory, so the
+    precision checks run on what the robot *did*.
+  - **Finding:** `play_motion` isn't bit-for-bit repeatable. Two runs of the same plain replay gave
+    5.6 cm / 10.1° and 5.9 cm / 10.4°, and `track.py` falls inside that spread. Verdicts near the
+    thresholds can flip, so read ±1–2 motions as noise.
+
 ## Phase 0: confirm the infrastructure supports this (half a day)
 
 Read, don't assume. Answer each question with the file and line that shows it:
