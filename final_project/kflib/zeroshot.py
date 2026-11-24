@@ -51,6 +51,36 @@ def precision(rows: list[dict], ts, results_dir, label: str = "v1") -> list[dict
   return out
 
 
+def foot_tracking(rows: list[dict], ts, results_dir, label: str = "v1", min_lift_cm: float = 2.0) -> list[dict]:
+  """How much of each paw lift the robot actually does (the verdicts only see the torso).
+
+  For every motion whose reference lifts a foot at least min_lift_cm: the foot with
+  the biggest lift, its peak height in the reference and in the recorded trajectory,
+  and their ratio (1 = the lift is done in full, 0 = the paw stays on the ground).
+  """
+  import numpy as np
+
+  from mjlab.tasks.tracking.config.pupper import motion_design as md
+
+  from .dataset import motion_from_npz
+  from .motion import LEGS, feet_series
+
+  out = []
+  for r in rows:
+    if r["label"] != label or not r.get("verdict"):
+      continue
+    ref = feet_series(motion_from_npz(ts.motions / f"{r['id']}.npz"))[..., 2] - md.FOOT_RADIUS
+    k = int(np.argmax(ref.max(0)))
+    if 100 * ref[:, k].max() < min_lift_cm:
+      continue
+    got = feet_series(load_tracked(Path(results_dir) / f"{r['id']}__{label}.json"))[..., 2] - md.FOOT_RADIUS
+    n = min(len(ref), len(got))
+    out.append(dict(id=r["id"], set=r["set"], foot=LEGS[k], reference_cm=round(100 * float(ref[:n, k].max()), 1),
+                    tracked_cm=round(100 * float(got[:n, k].max()), 1),
+                    ratio=round(float(got[:n, k].max() / ref[:n, k].max()), 2), verdict=r["verdict"]))
+  return out
+
+
 def figure(rows: list[dict], png) -> None:
   """Left: share of motions that HOLD UP, per test set and driver. Right: each motion's
   worst tilt, plain replay vs v1 (below the diagonal = v1 tracks it better)."""

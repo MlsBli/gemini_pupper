@@ -172,6 +172,27 @@ what the tracker is for.**
     5.6 cm / 10.1° and 5.9 cm / 10.4°, and `track.py` falls inside that spread. Verdicts near the
     thresholds can flip, so read ±1–2 motions as noise.
 
+- **2026-11-24, Phase 4 results (v1 at 5,000 iterations, zero-shot).** The self-checks pass (JSON =
+  checkpoint; `track.py` = `play_motion`). No motion falls in any set, under any driver.
+
+  | set | plain replay HOLDS UP | v1 HOLDS UP | v1 median | specialist |
+  |---|---|---|---|---|
+  | 4a benchmark (24) | 10/24, 2.3 cm / 8.1° | **23/24** | 1.0 cm / 3.6° | |
+  | 4b new requests (30) | 22/30, 2.2 cm / 4.5° | **29/30** | 0.9 cm / 3.2° | |
+  | 4c held-out tricks (3) | 1/3, 3.3 cm / 15.4° | **2/3** | 2.2 cm / 9.0° | 2/3, 1.4 cm / 3.0° |
+
+  - **Precision on the tracked motions:** 8/10 checks hold (crouch depth, lean and look angles,
+    nod count). **Both paw-lift checks fail:** the reference lifts front_l 5.0 cm, the robot 0.6 cm.
+  - **The student watched the three non-HOLDS-UP motions:** only `stand_sit_shake_sit_stand` really
+    fails (the paw barely leaves the ground during the shake); the other two look fine.
+  - **Finding: v1 skips small paw lifts, and the verdicts can't see it.**
+    - The body-position reward is one exponential over the *mean* squared error of 9 bodies, with a
+      10 cm tolerance. A 5 cm paw left on the ground costs about 3% of that one term.
+    - The foot termination only fires at an 8 cm miss.
+    - HOLDS UP measures the torso only.
+    - `kflib.zeroshot.foot_tracking` measures it from the saved trajectories: the share of each
+      reference paw lift the robot actually does.
+
 ## Phase 0: confirm the infrastructure supports this (half a day)
 
 Read, don't assume. Answer each question with the file and line that shows it:
