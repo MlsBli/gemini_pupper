@@ -64,6 +64,23 @@ def latest_checkpoint(runs_root, run_name: str) -> tuple[int, Path | None]:
   return c[-1] if c else (0, None)
 
 
+def chunk_plan(latest: int, resumed: bool, target: int, chunk: int) -> tuple[int, int]:
+  """(iterations to ask learn() for, index of the last iteration it will run).
+
+  rsl_rl counts iterations from 0 and names a checkpoint after the last index it
+  ran: 5,000 iterations from scratch end in model_4999.pt. A resume starts again at
+  that index (it reruns index 4999), so to end exactly at the next round number the
+  resumed chunk asks for one more. Returns (0, latest) when the target is reached.
+  """
+  if not resumed:
+    n = min(chunk, target)
+    return n, n - 1
+  if latest >= target - 1:
+    return 0, latest
+  end = min(latest + chunk, target - 1)
+  return end - latest + 1, end
+
+
 def summarize(rows: list[dict]) -> dict:
   """Per split: how many motions the policy holds up / wobbles / drops, the median and
   worst errors, and the worst five motions (the ones to watch)."""
