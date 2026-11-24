@@ -151,6 +151,14 @@ what the tracker is for.**
   - **Scoring:** a fixed evaluation set (every validation original + 30 training originals),
     scored with `play_motion` at each chunk.
 
+- **2026-11-24, v1 at 5,000 iterations** (`model_4999.pt`; W&B run rmvk3wq1):
+  - **Training sample:** 30/30 HOLDS UP, median 0.9 cm / 2.4°, worst 1.8 cm / 6.8°. That's as good as
+    the 10-motion smoke policy (median ~1 cm / ~3°), so the Phase 3 "done" bar is met.
+  - **Validation (never trained on):** 47/51 HOLDS UP (plain replay: 28/51), median 1.1 cm / 3.2°.
+    3 WOBBLES (`gem_q0156`, `gem_q0210`, `gem_q0236`) and 1 FALLS (`gem_q0137`, 11.4 cm / 28.6°), all
+    Gemini motions.
+  - Next: train to 10,000, score again, and keep going only while validation improves.
+
 ## Phase 0: confirm the infrastructure supports this (half a day)
 
 Read, don't assume. Answer each question with the file and line that shows it:
