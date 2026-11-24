@@ -193,6 +193,16 @@ what the tracker is for.**
     - `kflib.zeroshot.foot_tracking` measures it from the saved trajectories: the share of each
       reference paw lift the robot actually does.
 
+- **2026-11-24, paw lifts measured on the test set:** of 14 test motions that lift a paw, v1 does a
+  median **14%** of the lift and mostly skips 12. Plain replay does 73% and skips 1.
+- **2026-11-24, v2 set up (the student's choice: a reward term for the four paws, vertical only):**
+  - `kflib/rewards.py` `paw_height`: exp(-mean over the 4 paws of the squared height error / std²),
+    computed at the paw centres (the `leg_*_3` frames sit at the knees). Tested against the
+    kinematics of the reference and of the robot (0.00 mm).
+  - `phase3_v2.ipynb` fine-tunes from v1's weights: same library and evaluation set, defaults
+    std 2 cm and weight 1.0, target 10,000 iterations (5,000 more).
+  - The Phase 4 notebook now compares trackers side by side (`TRACKERS`).
+
 ## Phase 0: confirm the infrastructure supports this (half a day)
 
 Read, don't assume. Answer each question with the file and line that shows it:
