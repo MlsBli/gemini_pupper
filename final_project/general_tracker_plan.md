@@ -212,6 +212,19 @@ what the tracker is for.**
   - **Decision:** go for an MVP (on to Phase 5) and come back to polish later. Phase 4 with
     `TRACKERS = "pgt_v1,pgt_v2"` picks the tracker that goes forward.
 
+- **2026-11-24, Phase 4, v1 vs v2 (zero-shot), and v2 goes forward:**
+
+  | | plain | v1 @5,000 | **v2 @10,000** |
+  |---|---|---|---|
+  | 4a benchmark, HOLDS UP / median | 10/24, 2.3 cm / 8.1° | 23/24, 1.0 cm / 3.6° | 22/24, 1.1 cm / 3.0° |
+  | 4b new requests | 22/30, 2.2 cm / 4.5° | 29/30, 0.9 cm / 3.2° | 28/30, 0.9 cm / 2.5° |
+  | 4c held-out tricks (specialist 2/3, 1.4 cm / 3.0°) | 1/3, 3.3 cm / 15.4° | 2/3, 2.2 cm / 9.0° | 2/3, 2.5 cm / 6.9° |
+  | paw lift done (median share; mostly skipped) | 0.73; 1 of 14 | 0.14; 12 of 14 | **1.09; 2 of 14** |
+  | precision checks held | | 8/10 | 9/10 (the 10th misses only on hold time, by 0.02 s) |
+
+  No falls anywhere. v2 lifts its paws and tracks tilt and joints more closely; its HOLDS UP
+  counts are within noise of v1's.
+
 ## Phase 0: confirm the infrastructure supports this (half a day)
 
 Read, don't assume. Answer each question with the file and line that shows it:
