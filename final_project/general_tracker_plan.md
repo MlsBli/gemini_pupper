@@ -203,6 +203,15 @@ what the tracker is for.**
     std 2 cm and weight 1.0, target 10,000 iterations (5,000 more).
   - The Phase 4 notebook now compares trackers side by side (`TRACKERS`).
 
+- **2026-11-24, v2 trained to 10,000 iterations** (fine-tuned from v1 with `paw_height`, std 2 cm,
+  weight 1.0).
+  - **Training sample:** 30/30 HOLDS UP, median 0.9 cm / 2.5° (v1: 0.9 / 2.4).
+  - **Validation:** 46/51 HOLDS UP (v1: 47/51), median 1.0 cm / 2.4° (v1: 1.1 / 3.2); 4 WOBBLES and
+    1 FALLS (`gem_q0137` again).
+  - **The student watched the wobbles:** the paws lift now, but the lifts add some instability.
+  - **Decision:** go for an MVP (on to Phase 5) and come back to polish later. Phase 4 with
+    `TRACKERS = "pgt_v1,pgt_v2"` picks the tracker that goes forward.
+
 ## Phase 0: confirm the infrastructure supports this (half a day)
 
 Read, don't assume. Answer each question with the file and line that shows it:
