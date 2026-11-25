@@ -225,6 +225,17 @@ what the tracker is for.**
   No falls anywhere. v2 lifts its paws and tracks tilt and joints more closely; its HOLDS UP
   counts are within noise of v1's.
 
+- **2026-11-24, Phase 5 prepared (MVP path, no robot-software change):**
+  - **The path:** a trick folder (`policy.json` + `trick.yaml`) for the robot's `tricks/`, loaded at
+    restart. The `policy.json` is pupper-mjlab's `export_trick` on v2's weights with one held-out
+    motion embedded.
+  - **`kflib/deploy.py`** checks the course trick contract (identical to the sneeze policy's;
+    every course trick matches it), the embedded motion, a reference tilt of at most 45° (the
+    e-stop stays at 60°), and acceptance by the robot's own `robot/tricks.py`.
+  - **`phase5_deploy.ipynb`** exports, simulates the exact file, and zips it.
+  - **`phase5_ta_brief.md`** holds the questions for the TA.
+  - Nothing runs on the robot without the TA's OK.
+
 ## Phase 0: confirm the infrastructure supports this (half a day)
 
 Read, don't assume. Answer each question with the file and line that shows it:
