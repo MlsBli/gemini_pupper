@@ -160,3 +160,8 @@ async def play_policy_trick(robot: Robot, trick: Trick) -> Result:
 # ====================================
 async def play_trick_tool(robot: Robot, name: str) -> Result:
     return await play_trick(robot, name)
+
+
+# Final project: prepare_new_motion and play_new_motion (lab/new_motion.py). Imported
+# here because the tool registry loads only the lab's own files.
+import new_motion  # noqa: E402,F401

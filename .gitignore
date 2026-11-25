@@ -30,3 +30,6 @@ __pycache__/
 .env
 .env.*
 api_key
+
+# final project: tracker weights used as a template by motion_server.py (kept out of commits)
+final_project/*.policy.json

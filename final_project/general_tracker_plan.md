@@ -236,6 +236,20 @@ what the tracker is for.**
   - **`phase5_ta_brief.md`** holds the questions for the TA.
   - Nothing runs on the robot without the TA's OK.
 
+- **2026-11-25, the live path is built (the student chose a laptop motion server):**
+  - **On the laptop, `motion_server.py`:** per request, Gemini keyframes + the gate, then v2's
+    policy file with the motion swapped in (`kflib/policy_file.py`; identical to
+    `export_trick`'s output), the contract and tilt checks, and the exact file simulated with the
+    policy. Only HOLDS UP goes to the robot. About 35–60 s per request.
+  - **On the robot, `lab/new_motion.py`** (the student's choices: two steps, and only when no
+    other tool fits):
+    - `prepare_new_motion` gets the motion, runs the robot's validator, and loads the controller
+      at runtime with the robot's own `spawn()` and `controller_params`. Nothing moves.
+    - `play_new_motion` plays it via `play_policy_trick`, only after the user says yes.
+  - **Tests:** a desk test on the lab's test rig, `final_project/test_new_motion.py` (12/12); the
+    lab suite still passes every check it ran (161).
+  - **How to run it:** `LIVE_DEMO.md`. Waiting on the TA's OK for the first robot run.
+
 ## Phase 0: confirm the infrastructure supports this (half a day)
 
 Read, don't assume. Answer each question with the file and line that shows it:
